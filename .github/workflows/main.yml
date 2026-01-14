@@ -1,0 +1,27 @@
+name: SHOUROV-BOTV2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --omit=dev
+
+      - name: Start Shourov bot
+        run: |
+          echo "Shourov Bot starting..."
+          node index.js &
+          sleep 21600
