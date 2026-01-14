@@ -87,13 +87,13 @@ module.exports = {
 
       ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
 
-      ctx.font = "400 23px Arial";
+      ctx.font = "400 20px Arial";
       ctx.fillStyle = "#1878F3";
 
       const lines = await wrapText(ctx, name, 1160);
-      ctx.fillText(lines.join("\n"), 146, 451);
+      ctx.fillText(lines.join("\n"), 150, 445);
 
-      ctx.drawImage(baseAvt1, 55, 410, 70, 70);
+      ctx.drawImage(baseAvt1, 55, 405, 70, 70);
 
       const imageBuffer = canvas.toBuffer();
       fs.writeFileSync(pathImg, imageBuffer);
