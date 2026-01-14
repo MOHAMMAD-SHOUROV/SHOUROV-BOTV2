@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://i.postimg.cc/FzY76bGF/file-00000000907471fd97f0d43bb1879bc5.png" alt="banner" width="100%">
+  <img src="https://tinyurl.com/AlihsanShourov" alt="banner" width="100%">
   
   <h1>
     <img src="./dashboard/images/logo-non-bg.png" width="30px" style="vertical-align: middle">
