@@ -10,16 +10,16 @@ module.exports = {
     shortDescription: "Love photo"
   },
 
-  onStart: async function ({ api, event }) {
-    try {
-      const mention = Object.keys(event.mentions);
-      if (mention.length === 0) {
-        return api.sendMessage(
-          "💚 যাকে ভালোবাসো তাকে mention করো",
-          event.threadID,
-          event.messageID
-        );
-      }
+  onStart: async function ({ api,message,event,args }) {
+    const mention = Object.keys(event.mentions);
+
+    if (mention.length === 0)
+      return api.sendMessage(
+        "💚 যাকে ভালোবাসো তাকে mention করো",
+        event.threadID,
+        event.messageID
+      );
+
 
       const one = event.senderID;
       const two = mention[0];
