@@ -46,7 +46,7 @@ function validJSON(pathDir) {
 
 const dirConfig = path.normalize(`${__dirname}/config.json`);
 const dirConfigCommands = path.normalize(`${__dirname}/configCommands.json`);
-const dirAccount = path.normalize(`${__dirname}/account.txt`);
+const dirAccount = path.normalize(`${__dirname}/Shourov.txt`);
 
 for (const pathDir of [dirConfig, dirConfigCommands]) {
         try {
