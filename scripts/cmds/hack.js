@@ -53,7 +53,7 @@ module.exports = {
 
   onStart: async function ({ api, event }) {
     try {
-      let pathImg = __dirname + "/shourov/background.png";
+      let pathImg = __dirname + "/shourov/Shourov.jpg";
       let pathAvt1 = __dirname + "/shourov/Shourov1.png";
 
       var id = Object.keys(event.mentions)[0] || event.senderID;
