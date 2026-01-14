@@ -1,96 +1,63 @@
 const axios = require('axios');
-const fs = require('fs-extra'); 
-const path = require('path');
 
-const API_ENDPOINT = "https://dev.oculux.xyz/api/artv1"; 
+const baseApiUrl = async () => {
+  const base = await axios.get(
+    `https://raw.githubusercontent.com/Mostakim0978/D1PT0/refs/heads/main/baseApiUrl.json`
+  );
+  return base.data.api;
+};
 
 module.exports = {
   config: {
     name: "art",
-    aliases: ["artv1", "draw"],
-    version: "1.0", 
-    author: "NeoKEX",
-    countDown: 15,
+    version: "1.6.9",
+    author: "Nazrul",
     role: 0,
-    longDescription: "Generate an image using the ArtV1 model.",
-    category: "ai-image",
-    guide: {
-      en: "{pn} <prompt>"
+    description: "{pn} - Enhance your photos with artful transformations!",
+    category: "art",
+    countDown: 5,
+    guide: { 
+      en: "{pn} reply to an image"
     }
   },
-
-  onStart: async function({ message, args, event }) {
-    
-    let prompt = args.join(" ");
-
-    if (!prompt || !/^[\x00-\x7F]*$/.test(prompt)) {
-        return message.reply("❌ Please provide a valid English prompt to generate an image.");
-    }
-
-    message.reaction("⏳", event.messageID);
-    let tempFilePath; 
-
+  onStart: async function ({ message, event, args, api }) {
     try {
-      // The API uses 'p' for prompt
-      const fullApiUrl = `${API_ENDPOINT}?p=${encodeURIComponent(prompt.trim())}`;
-      
-      const imageDownloadResponse = await axios.get(fullApiUrl, {
-          responseType: 'stream',
-          timeout: 45000 
-      });
+      const cp = ["bal","zombie","anime","ghost", "watercolor", "sketch", "abstract", "cartoon","monster"];
+      const prompts = args[0] || cp[Math.floor(Math.random() * cp.length)];
 
-      if (imageDownloadResponse.status !== 200) {
-           throw new Error(`API request failed with status code ${imageDownloadResponse.status}.`);
+      const msg = await api.sendMessage("🎨 Processing your image, please wait...", event.threadID);
+
+      let photoUrl = "";
+
+      if (event.type === "message_reply" && event.messageReply?.attachments?.length > 0) {
+        photoUrl = event.messageReply.attachments[0].url;
+      } else if (args.length > 0) {
+        photoUrl = args.join(' ');
       }
-      
-      const cacheDir = path.join(__dirname, 'cache');
-      if (!fs.existsSync(cacheDir)) {
-          await fs.mkdirp(cacheDir); 
+
+      if (!photoUrl) {
+        return api.sendMessage("🔰 Please reply to an image or provide a URL!", event.threadID, event.messageID);
       }
-      
-      tempFilePath = path.join(cacheDir, `artv1_output_${Date.now()}.png`);
-      
-      const writer = fs.createWriteStream(tempFilePath);
-      imageDownloadResponse.data.pipe(writer);
 
-      await new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", (err) => {
-          writer.close();
-          reject(err);
-        });
-      });
+      const response = await axios.get(`${await baseApiUrl()}/art2?url=${encodeURIComponent(photoUrl)}&prompt=${encodeURIComponent(prompts)}`);
 
-      message.reaction("✅", event.messageID);
-      await message.reply({
-        body: `ArtV1 image generated ✨`,
-        attachment: fs.createReadStream(tempFilePath)
-      });
+      if (!response.data || !response.data.imageUrl) {
+        await api.sendMessage("⚠ Failed to return a valid image URL. Please try again.", event.threadID, event.messageID);
+        return;
+      }
+
+      const imageUrl = response.data.imageUrl;
+      await api.unsendMessage(msg.messageID);
+
+      const imageStream = await axios.get(imageUrl, { responseType: 'stream' });
+
+      await api.sendMessage({ 
+        body: `Here's your artful image! 🎨`, 
+        attachment: imageStream.data 
+      }, event.threadID, event.messageID);
 
     } catch (error) {
-      message.reaction("❌", event.messageID);
-      
-      let errorMessage = "An error occurred during image generation.";
-      if (error.response) {
-         if (error.response.status === 404) {
-             errorMessage = "API Endpoint not found (404).";
-         } else {
-             errorMessage = `HTTP Error: ${error.response.status}`;
-         }
-      } else if (error.code === 'ETIMEDOUT') {
-         errorMessage = `Generation timed out. Try a simpler prompt or check API status.`;
-      } else if (error.message) {
-         errorMessage = `${error.message}`;
-      } else {
-         errorMessage = `Unknown error.`;
-      }
-
-      console.error("ArtV1 Command Error:", error);
-      message.reply(`❌ ${errorMessage}`);
-    } finally {
-      if (tempFilePath && fs.existsSync(tempFilePath)) {
-          await fs.unlink(tempFilePath); 
-      }
+      await api.sendMessage(`Error: ${error.message}`, event.threadID, event.messageID);
     }
   }
 };
