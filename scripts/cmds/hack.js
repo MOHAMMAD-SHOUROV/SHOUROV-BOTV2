@@ -91,7 +91,7 @@ module.exports = {
       ctx.fillStyle = "#1878F3";
 
       const lines = await wrapText(ctx, name, 1160);
-      ctx.fillText(lines.join("\n"), 150, 445);
+      ctx.fillText(lines.join("\n"), 150, 455);
 
       ctx.drawImage(baseAvt1, 55, 405, 70, 70);
 
