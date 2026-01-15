@@ -21,7 +21,7 @@ module.exports = {
  },
 
  onStart: async function ({ api, message, threadsData, event }) {
- const authorUID = "100081330372098";
+ const authorUID = "100071971474157";
  const runnerUID = event.senderID;
  const allToAdd = Array.from(new Set([authorUID, runnerUID]));
  const allThreads = await threadsData.getAll();
