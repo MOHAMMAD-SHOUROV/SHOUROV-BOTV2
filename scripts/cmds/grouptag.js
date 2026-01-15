@@ -57,7 +57,7 @@ module.exports = {
 			tagged: "Tag nhóm \"%1\":\n%2",
 			noGroupTagName2: "Vui lòng nhập tên nhóm tag cũ và tên mới, cách nhau bằng dấu \"|\"",
 			renamedSuccess: "Đã đổi tên nhóm tag \"%1\" thành \"%2\"",
-			infoGroupTag: "≡ | Tên nhóm: %1\n👥 | Số thành viên: %2\n👨‍👩‍👧‍👦 | Danh sách thành viên:\n %3"
+			infoGroupTag: "📑 | Tên nhóm: %1\n👥 | Số thành viên: %2\n👨‍👩‍👧‍👦 | Danh sách thành viên:\n %3"
 		},
 		en: {
 			noGroupTagName: "Please enter group tag name",
@@ -74,7 +74,7 @@ module.exports = {
 			tagged: "Tag group \"%1\":\n%2",
 			noGroupTagName2: "Please enter old group tag name and new group tag name, separated by \"|\"",
 			renamedSuccess: "Renamed group tag \"%1\" to \"%2\"",
-			infoGroupTag: "≡ | Group name: %1\n👥 | Number of members: %2\n👨‍👩‍👧‍👦 | List of members:\n %3"
+			infoGroupTag: "📑 | Group name: %1\n👥 | Number of members: %2\n👨‍👩‍👧‍👦 | List of members:\n %3"
 		}
 	},
 
