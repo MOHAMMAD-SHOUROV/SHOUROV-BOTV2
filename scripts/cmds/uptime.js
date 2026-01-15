@@ -47,7 +47,7 @@ module.exports = {
 🕒 ᴜᴘᴛɪᴍᴇ : ${hours}ʜ ${minutes}ᴍ ${seconds}ꜱ
 📶 ᴘɪɴɢ    : ${ping}ᴍꜱ
 📅 ᴅᴀᴛᴇ    : ${currentDate}
-👑 ᴏᴡɴᴇʀ   : ᴍᴀʜᴀʙᴜʙ_🦋`;
+👑 ᴏᴡɴᴇʀ   : 𝐀𝐥𝐈𝐇𝐒𝐀𝐍 𝐒𝐇𝐎𝐔𝐑𝐎𝐕`;
 
       const apiUrl = "https://mahabub-bot-uptime.onrender.com/up";
 
@@ -61,7 +61,7 @@ module.exports = {
             uptime: formattedUptime,
             ping: `${ping}ms`,
             date: currentDate,
-            owner: "ᴍᴀʜᴀʙᴜʙ_ʀᴀʜᴍᴀɴ"
+            owner: "𝐀𝐥𝐈𝐇𝐒𝐀𝐍 𝐒𝐇𝐎𝐔𝐑𝐎𝐕"
           },
           timeout: 10000
         });
