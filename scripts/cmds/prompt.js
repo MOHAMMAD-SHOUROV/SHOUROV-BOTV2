@@ -1,73 +1,51 @@
 const axios = require("axios");
 
-const configUrl = "https://raw.githubusercontent.com/aryannix/stuffs/master/raw/apis.json";
-
 module.exports = {
   config: {
     name: "prompt",
-    aliases: ["p"],
-    version: "0.0.1",
+    aliases: ["imgprompt"],
+    version: "1.0.0",
+    author: "mahabub",
     role: 0,
-    author: "ArYAN",
+    shortDescription: {
+      en: "Generate a text prompt from an image"
+    },
+    longDescription: {
+      en: "Generate a text prompt from an image using API"
+    },
     category: "ai",
-    cooldowns: 5,
-    guide: { en: "Reply to an image to generate Midjourney prompt" }
+    guide: {
+      en: "{p}prompt (reply to an image)"
+    }
   },
 
-  onStart: async ({ api, event }) => {
-    const { threadID, messageID, messageReply } = event;
-
-    let baseApi;
+  onStart: async function ({ api, event }) {
     try {
-      const configRes = await axios.get(configUrl);
-      baseApi = configRes.data && configRes.data.api;
-      if (!baseApi) throw new Error("Configuration Error: Missing API in GitHub JSON.");
-    } catch (error) {
-      return api.sendMessage("❌ Failed to fetch API configuration from GitHub.", threadID, messageID);
-    }
-
-    if (
-      !messageReply ||
-      !messageReply.attachments ||
-      messageReply.attachments.length === 0 ||
-      !messageReply.attachments[0].url
-    ) {
-      return api.sendMessage("Please reply to an image.", threadID, messageID);
-    }
-
-    try {
-      api.setMessageReaction("⏰", messageID, () => {}, true);
-
-      const imageUrl = messageReply.attachments[0].url;
-      const apiUrl = `${baseApi}/promptv2`;
-
-      const apiResponse = await axios.get(apiUrl, {
-        params: { imageUrl }
-      });
-
-      const result = apiResponse.data;
-
-      if (!result.success) {
-        throw new Error(result.message || "Prompt API failed.");
+      if (!event.messageReply || !event.messageReply.attachments || event.messageReply.attachments.length === 0) {
+        return api.sendMessage("⚠ Please reply to an image.", event.threadID, event.messageID);
       }
 
-      const promptText = result.prompt || "No prompt returned.";
+      const attachment = event.messageReply.attachments[0];
+      if (attachment.type !== "photo") {
+        return api.sendMessage("⚠ Only image attachments are supported.", event.threadID, event.messageID);
+      }
 
-      await api.sendMessage(
-        { body: `${promptText}` },
-        threadID,
-        messageID
+      const imageUrl = attachment.url;
+      const response = await axios.get(
+        `https://mahabub-prompt-api.vercel.app/api/prompt?url=${encodeURIComponent(imageUrl)}`
       );
 
-      api.setMessageReaction("✅", messageID, () => {}, true);
-    } catch (e) {
-      api.setMessageReaction("❌", messageID, () => {}, true);
-
-      let msg = "Error while generating prompt.";
-      if (e.response?.data?.error) msg = e.response.data.error;
-      else if (e.message) msg = e.message;
-
-      api.sendMessage(msg, threadID, messageID);
+      if (response.data && response.data.prompt) {
+        return api.sendMessage(
+          `📝 Prompt generated \n\n${response.data.prompt}`,
+          event.threadID,
+          event.messageID
+        );
+      } else {
+        return api.sendMessage("❌ No prompt found in response.", event.threadID, event.messageID);
+      }
+    } catch (error) {
+      return api.sendMessage("❌ Error while generating prompt.", event.threadID, event.messageID);
     }
   }
 };

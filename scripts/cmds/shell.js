@@ -1,81 +1,38 @@
 const { exec } = require("child_process");
-const util = require("util");
-const execPromise = util.promisify(exec);
 
-module.exports = {
-        config: {
-                name: "shell",
-                aliases: ["sh", "cmd", "exec"],
-                version: "1.0",
-                author: "NeoKEX",
-                countDown: 5,
-                role: 4,
-                description: {
-                        vi: "Thực thi lệnh shell",
-                        en: "Execute shell commands"
-                },
-                category: "owner",
-                guide: {
-                        vi: '   {pn} <command>: Thực thi lệnh shell'
-                                + '\n   Ví dụ: {pn} ls -la'
-                                + '\n   {pn} node -v',
-                        en: '   {pn} <command>: Execute shell command'
-                                + '\n   Example: {pn} ls -la'
-                                + '\n   {pn} node -v'
-                }
-        },
+module.exports.config = {
+    name: "shell",
+    aliases: ["sh"],
+    version: "1.0",
+    author: "Dipto",
+    role: 2,
+    description: "Execute shell commands",
+    category: "system",
+    guide: "{pn} <command>",
+    coolDowns: 5,
+    premium: false
+};
 
-        langs: {
-                vi: {
-                        missingCommand: "⚠ | Vui lòng nhập lệnh shell cần thực thi",
-                        executing: "⚙ | Đang thực thi lệnh...",
-                        output: "✓ | Kết quả:\n\n%1",
-                        error: "✗ | Lỗi:\n\n%1",
-                        timeout: "⚠ | Lệnh thực thi quá lâu (timeout 30s)"
-                },
-                en: {
-                        missingCommand: "⚠ | Please enter shell command to execute",
-                        executing: "⚙ | Executing command...",
-                        output: "✓ | Output:\n\n%1",
-                        error: "✗ | Error:\n\n%1",
-                        timeout: "⚠ | Command execution timeout (30s)"
-                }
-        },
+module.exports.onStart = async ({ message, args }) => {
+    if (!args.length) {
+        return message.reply("❌ | Please provide a command to execute.");
+    }
 
-        onStart: async function ({ message, args, event, getLang, api }) {
-                const command = args.join(" ");
-                if (!command)
-                        return message.reply(getLang("missingCommand"));
+    const command = args.join(" ");
 
-                await message.reply(getLang("executing"));
-
-                try {
-                        const { stdout, stderr } = await execPromise(command, {
-                                timeout: 30000,
-                                maxBuffer: 1024 * 1024 * 10
-                        });
-
-                        let output = "";
-                        if (stdout) output += stdout;
-                        if (stderr) output += stderr;
-
-                        if (!output) output = "Command executed successfully (no output)";
-
-                        if (output.length > 2000) {
-                                output = output.substring(0, 1997) + "...";
-                        }
-
-                        return message.reply(getLang("output", output));
-                } catch (error) {
-                        let errorMsg = error.message;
-                        if (errorMsg.includes("ETIMEDOUT") || errorMsg.includes("timeout"))
-                                return message.reply(getLang("timeout"));
-
-                        if (errorMsg.length > 2000) {
-                                errorMsg = errorMsg.substring(0, 1997) + "...";
-                        }
-
-                        return message.reply(getLang("error", errorMsg));
-                }
+    exec(command, { maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+        if (error) {
+            return message.reply(`❌ | Error: ${error.message}`);
         }
+        if (stderr) {
+            return message.reply(`⚠️ | Shell Error:\n${stderr}`);
+        }
+
+        const output = stdout || "✅ | Command executed successfully with no output.";
+        // prevent sending too large output
+        if (output.length > 4000) {
+            return message.reply("⚠️ | Output too long to display. Try redirecting to a file.");
+        }
+        message.reply(output);
+    });
 };

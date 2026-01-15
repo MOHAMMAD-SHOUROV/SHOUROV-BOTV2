@@ -1,127 +1,159 @@
-const a = require("yt-search");
-const b = require("axios");
-const c = require("fs");
-const d = require("path");
+const axios = require("axios");
+const fs = require('fs');
 
-const nix = "https://raw.githubusercontent.com/aryannix/stuffs/master/raw/apis.json";
-
-async function f(g) {
-  const h = await b({ url: g, responseType: "stream" });
-  return h.data;
-}
-
-module.exports = {
-  config: {
-    name: "youtube",
-    aliases: ["ytb"],
-    version: "0.0.9",
-    author: "ArYAN",
-    countDown: 5,
-    role: 0,
-    description: { en: "Search and download YouTube video/audio" },
-    category: "media",
-    guide: { en: "{pn} -v <query|url>\n{pn} -a <query|url>" }
-  },
-
-  onStart: async function ({ api: i, args, event: k, commandName: l }) {
-    let e;
-    try {
-      const apiConfig = await b.get(nix);
-      e = apiConfig.data && apiConfig.data.api;
-      if (!e) {
-        return i.sendMessage("❌ Configuration Error: GitHub apis.json is missing the 'api' field.", k.threadID, k.messageID);
-      }
-    } catch (error) {
-      console.error("API Config Fetch Error:", error);
-      return i.sendMessage("❌ Failed to fetch API configuration from GitHub.", k.threadID, k.messageID);
-    }
-
-    const aryan = args;
-    const n = aryan[0];
-    if (!["-v", "-a"].includes(n)) return i.sendMessage("❌ Usage: /ytb [-a|-v] <search or YouTube URL>", k.threadID, k.messageID);
-
-    const o = aryan.slice(1).join(" ");
-    if (!o) return i.sendMessage("❌ Provide a search query or URL.", k.threadID, k.messageID);
-
-    if (o.startsWith("http")) {
-      if (n === "-v") return await p(o, "mp4", i, k, e);
-      else return await p(o, "mp3", i, k, e);
-    }
-
-    try {
-      const q = await a(o);
-      const r = q.videos.slice(0, 6);
-      if (r.length === 0) return i.sendMessage("❌ No results found.", k.threadID, k.messageID);
-
-      let s = "";
-      r.forEach((t, u) => {
-        const v = n === "-v" ? t.seconds ? "360p" : "Unknown" : "128kbps";
-        s += `• Title: ${t.title}\n• Quality: ${v}\n\n`;
-      });
-
-      const w = await Promise.all(r.map(x => f(x.thumbnail)));
-
-      i.sendMessage(
-        { body: s + "Reply with number (1-6) to download", attachment: w },
-        k.threadID,
-        (err, y) => {
-          global.GoatBot.onReply.set(y.messageID, {
-            commandName: l,
-            messageID: y.messageID,
-            author: k.senderID,
-            results: r,
-            type: n,
-            baseApi: e
-          });
-        },
-        k.messageID
-      );
-    } catch (err) {
-      console.error(err);
-      i.sendMessage("❌ Failed to search YouTube.", k.threadID, k.messageID);
-    }
-  },
-
-  onReply: async function ({ event: z, api: A, Reply: B }) {
-    const { results: C, type: D, baseApi: e } = B;
-    if (!e) return A.sendMessage("❌ Configuration lost. Please try the command again.", z.threadID, z.messageID);
-
-    const E = parseInt(z.body);
-
-    if (isNaN(E) || E < 1 || E > C.length) return A.sendMessage("❌ Invalid selection. Choose 1-6.", z.threadID, z.messageID);
-
-    const F = C[E - 1];
-    await A.unsendMessage(B.messageID);
-
-    if (D === "-v") await p(F.url, "mp4", A, z, e);
-    else await p(F.url, "mp3", A, z, e);
-  }
+const baseApiUrl = async () => {
+	const base = await axios.get(
+`https://raw.githubusercontent.com/Blankid018/D1PT0/main/baseApiUrl.json`
+	);
+	return base.data.api;
 };
 
-async function p(q, r, s, t, e) {
-  try {
-    const { data: u } = await b.get(`${e}/yx?url=${encodeURIComponent(q)}&type=${r}`);
-    const v = u.download_url;
-    if (!u.status || !v) throw new Error("API failed");
+module.exports = {
+	config: {
+		name: "ytb",
+		version: "1.1.4",
+		aliases: ['youtube'],
+		author: "dipto",
+		countDown: 5,
+		role: 0,
+		description: {
+			en: "Download video, audio, and info from YouTube"
+		},
+		category: "media",
+		guide: {
+			en: "  {pn} [video|-v] [<video name>|<video link>]: use to download video from YouTube."
+				+ "\n   {pn} [audio|-a] [<video name>|<video link>]: use to download audio from YouTube"
+				+ "\n   {pn} [info|-i] [<video name>|<video link>]: use to view video information from YouTube"
+				+ "\n   Example:"
+				+ "\n {pn} -v chipi chipi chapa chapa"
+				+ "\n {pn} -a chipi chipi chapa chapa"
+				+ "\n {pn} -i chipi chipi chapa chapa"
+		}
+	},
+	onStart: async ({ api, args, event, commandName }) => {
+		const action = args[0].toLowerCase();
+		
+					const checkurl = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))((\w|-){11})(?:\S+)?$/;
+    const urlYtb = checkurl.test(args[1]);
+		let videoID
+  if(urlYtb){
+		if (action === '-v' || action === '-a') {
+			try {
+				const format = action === '-v' ? 'mp4' : 'mp3';
+				const path = `ytb_${format}_${videoID}.${format}`;
+	  
+	const match = args[1].match(checkurl);
+  videoID = match ? match[1] : null;
+				const { data: { title, downloadLink, quality } } = await axios.get(`${await baseApiUrl()}/ytDl3?link=${videoID}&format=${format}&quality=3`);
+await api.sendMessage({
+					body: `• Title: ${title}\n• Quality: ${quality}`,
+					attachment: await dipto(downloadLink, path)
+				}, event.threadID, () => fs.unlinkSync(path), event.messageID);
+			} catch (e) {
+				console.error(e);
+				return api.sendMessage('❌ Failed to download the video/audio. Please try again later.', event.threadID, event.messageID);
+			}
+		} }
+		args.shift();
+		let keyWord = args.join(" ");
+		const maxResults = 6;
+		let result;
+		try {
+			result = (await axios.get(`${await baseApiUrl()}/ytFullSearch?songName=${keyWord}`)).data.slice(0, maxResults);
+		} catch (err) {
+			return api.sendMessage("❌ An error occurred: " + err.message, event.threadID, event.messageID);
+		}
 
-    const w = d.join(__dirname, `yt_${Date.now()}.${r}`);
-    const x = c.createWriteStream(w);
-    const y = await b({ url: v, responseType: "stream" });
-    y.data.pipe(x);
+		if (result.length === 0) {
+			return api.sendMessage("⭕ No search results match the keyword: " + keyWord, event.threadID, event.messageID);
+		}
 
-    await new Promise((resolve, reject) => {
-      x.on("finish", resolve);
-      x.on("error", reject);
-    });
+		let msg = "";
+		let i = 1;
+		const thumbnails = [];
+		for (const info of result) {
+			thumbnails.push(diptoSt(info.thumbnail, `thumbnail.jpg`));
+			msg += `${i++}. ${info.title}\nTime: ${info.time}\nChannel: ${info.channel.name}\n\n`;
+		}
 
-    await s.sendMessage(
-      { attachment: c.createReadStream(w) },
-      t.threadID,
-      () => c.unlinkSync(w),
-      t.messageID
-    );
-  } catch (err) {
-    console.error(`${r} error:`, err.message);
-    s.sendMessage(`❌ Failed to download ${r}.`, t.threadID, t.messageID);
-  }
+		api.sendMessage({
+			body: msg + "Reply to this message with a number to choose",
+			attachment: await Promise.all(thumbnails)
+		}, event.threadID, (err, info) => {		global.GoatBot.onReply.set(info.messageID, {
+				commandName,
+				messageID: info.messageID,
+				author: event.senderID,
+				result,
+				action
+			});
+		}, event.messageID);
+	},
+
+	onReply: async ({ event, api, Reply }) => {
+		const { result, action } = Reply;
+		const choice = parseInt(event.body);
+
+		if (isNaN(choice) || choice <= 0 || choice > result.length) {
+			return api.sendMessage('❌ Invalid choice. Please reply with a valid number.', event.threadID, event.messageID);
+		}
+
+		const selectedVideo = result[choice - 1];
+		const videoID = selectedVideo.id;
+
+		if (action === '-v' || action === 'video' || action === 'mp4' || action === '-a'  || action === 'audio' || action === 'mp3' || action === 'music') {
+			try {
+				let format = ['-a', 'audio', 'mp3', 'music'].includes(action) ? 'mp3' : 'mp4';
+				const path = `ytb_${format}_${videoID}.${format}`;
+				const { data: { title, downloadLink, quality } } = await axios.get(`${await baseApiUrl()}/ytDl3?link=${videoID}&format=${format}&quality=3`);
+
+				api.unsendMessage(Reply.messageID);
+				await api.sendMessage({
+					body: `• Title: ${title}\n• Quality: ${quality}`,
+					attachment: await dipto(downloadLink, path)
+				}, event.threadID, () => fs.unlinkSync(path), event.messageID);
+			} catch (e) {
+				console.error(e);
+				return api.sendMessage('❌ Failed to download the video/audio. Please try again later.', event.threadID, event.messageID);
+			}
+		}
+
+	if (action === '-i' || action === 'info') {
+			try {
+				const { data } = await axios.get(`${await baseApiUrl()}/ytfullinfo?videoID=${videoID}`);
+				api.unsendMessage(Reply.messageID);
+				await api.sendMessage({
+					body: `✨ | 𝚃𝚒𝚝𝚕𝚎: ${data.title}\n⏳ | 𝙳𝚞𝚛𝚊𝚝𝚒𝚘𝚗: ${data.duration / 60} minutes\n𝚁𝚎𝚜𝚘𝚕𝚞𝚝𝚒𝚘𝚗: ${data.resolution}\n👀 | 𝚅𝚒𝚎𝚠 𝙲𝚘𝚞𝚗𝚝: ${data.view_count}\n👍🏻 | 𝙻𝚒𝚔𝚎𝚜: ${data.like_count}\n📬 | 𝙲𝚘𝚖𝚖𝚎𝚗𝚝𝚜: ${data.comment_count}\n♻️ | 𝙲𝚊𝚝𝚎𝚐𝚘𝚛𝚒𝚎𝚜: ${data.categories[0]}\n🌐 | 𝙲𝚑𝚊𝚗𝚗𝚎𝚕: ${data.channel}\n🧍🏻‍♂️ | 𝚄𝚙𝚕𝚘𝚊𝚍𝚎𝚛 𝙸𝚍: ${data.uploader_id}\n👥 | 𝚂𝚞𝚋𝚜𝚌𝚛𝚒𝚋𝚎𝚛𝚜: ${data.channel_follower_count}\n🔗 | 𝙲𝚑𝚊𝚗𝚗𝚎𝚕 𝚄𝚛𝚕: ${data.channel_url}\n🔗 | 𝚅𝚒𝚍𝚎𝚘 𝚄𝚛𝚕: ${data.webpage_url}`,
+					attachment: await diptoSt(data.thumbnail, 'info_thumb.jpg')
+				}, event.threadID, event.messageID);
+			} catch (e) {
+				console.error(e);
+				return api.sendMessage('❌ Failed to retrieve video info. Please try again later.', event.threadID, event.messageID);
+			}
+		}
+	}
+};
+async function dipto(url,pathName) {
+	try {
+		const response = (await axios.get(url,{
+			responseType: "arraybuffer"
+		})).data;
+
+		fs.writeFileSync(pathName, Buffer.from(response));
+		return fs.createReadStream(pathName);
+	}
+	catch (err) {
+		throw err;
+	}
+}
+async function diptoSt(url,pathName) {
+	try {
+		const response = await axios.get(url,{
+			responseType: "stream"
+		});
+		response.data.path = pathName;
+		return response.data;
+	}
+	catch (err) {
+		throw err;
+	}
 }

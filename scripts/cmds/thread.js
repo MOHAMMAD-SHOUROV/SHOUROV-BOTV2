@@ -40,7 +40,7 @@ module.exports = {
 		vi: {
 			noPermission: "Bạn không có quyền sử dụng tính năng này",
 			found: "🔎 Tìm thấy %1 nhóm trùng với từ khóa \"%2\" trong dữ liệu của bot:\n%3",
-			notFound: "✗ Không tìm thấy nhóm nào có tên khớp với từ khoá: \"%1\" trong dữ liệu của bot",
+			notFound: "❌ Không tìm thấy nhóm nào có tên khớp với từ khoá: \"%1\" trong dữ liệu của bot",
 			hasBanned: "Nhóm mang id [%1 | %2] đã bị cấm từ trước:\n» Lý do: %3\n» Thời gian: %4",
 			banned: "Đã cấm nhóm mang id [%1 | %2] sử dụng bot.\n» Lý do: %3\n» Thời gian: %4",
 			notBanned: "Hiện tại nhóm mang id [%1 | %2] không bị cấm sử dụng bot",
@@ -51,7 +51,7 @@ module.exports = {
 		en: {
 			noPermission: "You don't have permission to use this feature",
 			found: "🔎 Found %1 group matching the keyword \"%2\" in bot data:\n%3",
-			notFound: "✗ No group found matching the keyword: \"%1\" in bot data",
+			notFound: "❌ No group found matching the keyword: \"%1\" in bot data",
 			hasBanned: "Group with id [%1 | %2] has been banned before:\n» Reason: %3\n» Time: %4",
 			banned: "Banned group with id [%1 | %2] using bot.\n» Reason: %3\n» Time: %4",
 			notBanned: "Group with id [%1 | %2] is not banned using bot",
