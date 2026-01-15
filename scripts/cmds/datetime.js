@@ -25,7 +25,7 @@ module.exports = {
       const reply = `📅 **Date & Time in Dhaka, Bangladesh**\n` +
         `❏ **Date:** ${now.format("dddd, DD MMMM YYYY")}\n` +
         `❏ **Time:** ${now.format("h:mm:ss A")} (UTC+6)\n` +
-        `❏ **Author:** MR᭄﹅ MAHABUB﹅ メꪜ`;
+        `❏ **Author:** 𝐀𝐥𝐈𝐇𝐒𝐀𝐍 𝐒𝐇𝐎𝐔𝐑𝐎𝐕`;
 
       const imageUrls = [
         "https://drive.google.com/uc?export=download&id=1IwnpXVzcxY9s5HK-Nys2Sy4LhJLdNs3i",
