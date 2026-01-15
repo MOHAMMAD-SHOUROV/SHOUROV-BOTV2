@@ -3,8 +3,8 @@ const { getTime, drive } = global.utils;
 module.exports = {
   config: {
     name: "leave",
-    version: "1.6",
-    author: "NTKhang | styled by Mahabub",
+    version: "1.6-fixed",
+    author: "NTKhang | fixed by Alihsan Shourov",
     category: "events"
   },
 
@@ -17,145 +17,68 @@ module.exports = {
       leaveType1: "ʟᴇꜰᴛ ᴛʜᴇ ɢʀᴏᴜᴘ",
       leaveType2: "ᴡᴀꜱ ʀᴇᴍᴏᴠᴇᴅ ꜰʀᴏᴍ ᴛʜᴇ ɢʀᴏᴜᴘ",
       defaultLeaveMessage:
-        "👋 ʟᴇᴀᴠᴇ ᴇᴠᴇɴᴛ\n\n🧑 ᴜꜱᴇʀ: {userName}\n❌ ᴛʏᴘᴇ: {type}\n💬 ɢʀᴏᴜᴘ: {threadName}\n⏰ ᴛɪᴍᴇ: {time}\n🌏 ꜱᴇꜱꜱɪᴏɴ: {session}"
-    },
-    vi: {
-      session1: "🌅 ʙᴜᴏ̂̉ɪ ꜱᴀ́ɴɢ",
-      session2: "☀️ ʙᴜᴏ̂̉ɪ ᴛʀᴜ̛ᴀ",
-      session3: "🌇 ʙᴜᴏ̂̉ɪ ᴄʜɪᴇ̂̀ᴜ",
-      session4: "🌙 ʙᴜᴏ̂̉ɪ ᴛᴏ̂́ɪ",
-      leaveType1: "ᴛᴜ̛̣ ʀᴏ̛̀ɪ ɴʜᴏ́ᴍ",
-      leaveType2: "ʙɪ̣ ᴋɪᴄᴋ ᴋʜᴏ̉ɪ ɴʜᴏ́ᴍ",
-      defaultLeaveMessage:
-        "👋 ꜱᴜ̛̣ ᴋɪᴇ̣̂ɴ ᴛʀᴀɪɴɢ\n\n🧑 ɴɢᴜ̛ᴏ̛̀ɪ ᴅᴜ̀ɴɢ: {userName}\n❌ ʟᴏᴀ̣ɪ: {type}\n💬 ɴʜᴏ́ᴍ: {threadName}\n⏰ ᴛʜᴏ̛̀ɪ ɢɪᴀɴ: {time}\n🌏 ʙᴜᴏ̂̉ɪ: {session}"
+        "👋 Leave Event\n\n🧑 User: {userName}\n❌ Type: {type}\n💬 Group: {threadName}\n⏰ Time: {time}\n🌏 Session: {session}"
     }
   },
 
+  // ✅ MUST be async
   onStart: async ({ threadsData, message, event, api, usersData, getLang }) => {
-    if (event.logMessageType == "log:unsubscribe")
-      return async function () {
-        const { threadID } = event;
-        const threadData = await threadsData.get(threadID);
-        if (!threadData.settings.sendLeaveMessage) return;
+    if (event.logMessageType !== "log:unsubscribe") return;
 
-        const { leftParticipantFbId } = event.logMessageData;
-        if (leftParticipantFbId == api.getCurrentUserID()) return;
+    const { threadID } = event;
+    const threadData = await threadsData.get(threadID);
+    if (!threadData?.settings?.sendLeaveMessage) return;
 
-        const hours = getTime("HH");
-        const fullTime = getTime("DD/MM/YYYY HH:mm");
+    const { leftParticipantFbId } = event.logMessageData;
+    if (leftParticipantFbId == api.getCurrentUserID()) return;
 
-        const threadName = threadData.threadName;
-        const userName = await usersData.getName(leftParticipantFbId);
+    const hours = Number(getTime("HH"));
+    const fullTime = getTime("DD/MM/YYYY HH:mm");
 
-        let { leaveMessage = getLang("defaultLeaveMessage") } =
-          threadData.data;
+    const threadName = threadData.threadName || "Group";
+    const userName = await usersData.getName(leftParticipantFbId);
 
-        const type =
-          event.author === leftParticipantFbId
-            ? getLang("leaveType1")
-            : getLang("leaveType2");
+    let { leaveMessage = getLang("defaultLeaveMessage") } = threadData.data || {};
 
-        leaveMessage = leaveMessage
-          .replace(/\{userName\}|\{userNameTag\}/g, userName)
-          .replace(/\{type\}/g, type)
-          .replace(/\{threadName\}|\{boxName\}/g, threadName)
-          .replace(/\{time\}/g, fullTime)
-          .replace(
-            /\{session\}/g,
-            hours <= 10
-              ? getLang("session1")
-              : hours <= 12
-              ? getLang("session2")
-              : hours <= 18
-              ? getLang("session3")
-              : getLang("session4")
-          );
+    const type =
+      event.author === leftParticipantFbId
+        ? getLang("leaveType1")
+        : getLang("leaveType2");
 
-        const form = {
-          body: leaveMessage
-        };
+    leaveMessage = leaveMessage
+      .replace(/\{userName\}|\{userNameTag\}/g, userName)
+      .replace(/\{type\}/g, type)
+      .replace(/\{threadName\}|\{boxName\}/g, threadName)
+      .replace(/\{time\}/g, fullTime)
+      .replace(
+        /\{session\}/g,
+        hours <= 10
+          ? getLang("session1")
+          : hours <= 12
+          ? getLang("session2")
+          : hours <= 18
+          ? getLang("session3")
+          : getLang("session4")
+      );
 
-        if (leaveMessage.includes("{userNameTag}")) {
-          form.mentions = [
-            {
-              id: leftParticipantFbId,
-              tag: userName
-            }
-          ];
-        }
+    const form = { body: leaveMessage };
 
-        if (threadData.data.leaveAttachment) {
-          const files = threadData.data.leaveAttachment;
-          const attachments = files.map(file =>
-            drive.getFile(file, "stream")
-          );
-          form.attachment = (await Promise.allSettled(attachments))
-            .filter(({ status }) => status == "fulfilled")
-            .map(({ value }) => value);
-        }
+    if (leaveMessage.includes("{userNameTag}")) {
+      form.mentions = [
+        { id: leftParticipantFbId, tag: userName }
+      ];
+    }
 
-        message.send(form);
-      };
+    if (threadData.data?.leaveAttachment) {
+      const files = threadData.data.leaveAttachment;
+      const attachments = files.map(file =>
+        drive.getFile(file, "stream")
+      );
+      form.attachment = (await Promise.allSettled(attachments))
+        .filter(r => r.status === "fulfilled")
+        .map(r => r.value);
+    }
+
+    message.send(form);
   }
-};				if (!threadData.settings.sendLeaveMessage)
-					return;
-				const { leftParticipantFbId } = event.logMessageData;
-				if (leftParticipantFbId == api.getCurrentUserID())
-					return;
-				const hours = getTime("HH");
-
-				const threadName = threadData.threadName;
-				const userName = await usersData.getName(leftParticipantFbId);
-
-				// {userName}   : name of the user who left the group
-				// {type}       : type of the message (leave)
-				// {boxName}    : name of the box
-				// {threadName} : name of the box
-				// {time}       : time
-				// {session}    : session
-
-				let { leaveMessage = getLang("defaultLeaveMessage") } = threadData.data;
-				const form = {
-					mentions: leaveMessage.match(/\{userNameTag\}/g) ? [{
-						tag: userName,
-						id: leftParticipantFbId
-					}] : null
-				};
-
-				leaveMessage = leaveMessage
-					.replace(/\{userName\}|\{userNameTag\}/g, userName)
-					.replace(/\{type\}/g, leftParticipantFbId == event.author ? getLang("leaveType1") : getLang("leaveType2"))
-					.replace(/\{threadName\}|\{boxName\}/g, threadName)
-					.replace(/\{time\}/g, hours)
-					.replace(/\{session\}/g, hours <= 10 ?
-						getLang("session1") :
-						hours <= 12 ?
-							getLang("session2") :
-							hours <= 18 ?
-								getLang("session3") :
-								getLang("session4")
-					);
-
-				form.body = leaveMessage;
-
-				if (leaveMessage.includes("{userNameTag}")) {
-					form.mentions = [{
-						id: leftParticipantFbId,
-						tag: userName
-					}];
-				}
-
-				if (threadData.data.leaveAttachment) {
-					const files = threadData.data.leaveAttachment;
-					const attachments = files.reduce((acc, file) => {
-						acc.push(drive.getFile(file, "stream"));
-						return acc;
-					}, []);
-					form.attachment = (await Promise.allSettled(attachments))
-						.filter(({ status }) => status == "fulfilled")
-						.map(({ value }) => value);
-				}
-				message.send(form);
-			};
-	}
 };
