@@ -27,9 +27,9 @@ module.exports = {
                 "\n\n‣ 𝐆𝐥𝐨𝐛𝐚𝐥 𝐩𝐫𝐞𝐟𝐢𝐱: %1" +
                 "\n\n‣ 𝐘𝐨𝐮𝐫 𝐠𝐫𝐨𝐮𝐩 𝐩𝐫𝐞𝐟𝐢𝐱: %2" +
                 "\n\n‣ 𝐀𝐝𝐦𝐢𝐧" +
-                "\n\n‣ MR᭄﹅ MAHABUB﹅ メꪜ" +
+                "\n\n‣ 𝐀𝐥𝐈𝐇𝐒𝐀𝐍 𝐒𝐇𝐎𝐔𝐑𝐎𝐕" +
                 "\n\n‣ 𝐅𝐚𝐜𝐞𝐛𝐨𝐨𝐤 ⓕ" +
-                "\n‣ https://facebook.com/www.xnxx.com140\n"
+                "\n‣ https://www.facebook.com/shourov.sm24\n"
         }
     },
 
