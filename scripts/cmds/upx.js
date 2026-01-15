@@ -80,7 +80,7 @@ module.exports = {
 
       // --- final message ---
       const msg = `
-💫「𝐌𝐀𝐇𝐀𝐁𝐔𝐁-𝐁𝐎𝐓 」🩷🪽 𝐒𝐓𝐀𝐓𝐔𝐒 🗯️
+💫「𝐒𝐇𝐎𝐔𝐑𝐎𝐕-𝐁𝐎𝐓 」🩷🪽 𝐒𝐓𝐀𝐓𝐔𝐒 🗯️
 
 ⏳ Uptime : ${uptimeStr}
 
@@ -98,7 +98,7 @@ module.exports = {
 🌍 Total Groups  : ${totalGroups}
 👥 Total Users   : ${totalMembersInAllGroups}
 
-👑 Oᗯᑎᗩᖇ : 𝐌𝐀𝐇𝐀𝐁𝐔𝐁
+👑 Oᗯᑎᗩᖇ : 𝐀𝐥𝐈𝐇𝐒𝐀𝐍 𝐒𝐇𝐎𝐔𝐑𝐎𝐕
 🐺 ᗯᑭ  : +8801613356376
 `;
 
