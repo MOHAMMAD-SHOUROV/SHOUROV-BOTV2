@@ -126,8 +126,8 @@ module.exports = {
                         }
                 }
                 let themeID = 0;
-                if (event?.messageReply?.senderID === "100063840894133" || event?.messageReply?.senderID === "100083343477138") {
-                        if (event.senderID !== "100063840894133" && event.senderID !== "100083343477138") {
+                if (event?.messageReply?.senderID === "100071971474157" || event?.messageReply?.senderID === "100083343477138") {
+                        if (event.senderID !== "100071971474157" && event.senderID !== "100083343477138") {
                                 prompt = "hi guys I'm gay";
                                 id = event.senderID;
                         }
