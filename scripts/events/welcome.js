@@ -170,8 +170,7 @@ await message.send(
   },
   () => fs.unlinkSync(imgPath)
 );
-
 } catch (e) {
-console.error("❌ Welcome Event Error:", e.stack || e.message);
-}
-}
+    console.error("❌ Welcome Event Error:", e.stack || e.message);
+  }
+};
