@@ -6,9 +6,13 @@ module.exports = {
     version: "10.02",
     author: "Alihsan Shourov",
     role: 0,
-    category: "group"
+    category: "group",
+    shortDescription: "Auto time announce system",
+    longDescription: "Automatically sends time messages every hour",
+    guide: "Auto system, no command needed"
   },
 
+  // ⏰ Scheduled messages
   messages: [
     { timer: "23:00:00", message: "🕚 11:00 PM ...𝐒𝐇𝐎𝐔𝐑𝐎𝐕_𝐁𝐎𝐓" },
     { timer: "00:00:00", message: "🕛 12:00 AM ...𝐒𝐇𝐎𝐔𝐑𝐎𝐕_𝐁𝐎𝐓" },
@@ -37,26 +41,32 @@ module.exports = {
   ],
 
   onLoad: async function ({ api }) {
-    setInterval(() => {
+    // check every second
+    setInterval(async () => {
       try {
+        // 🇧🇩 Bangladesh time (UTC +6)
         const now = new Date(Date.now() + 6 * 60 * 60 * 1000)
           .toISOString()
           .substr(11, 8);
 
-        const scheduled = this.messages.find(m => m.timer === now);
+        const scheduled = module.exports.messages.find(m => m.timer === now);
         if (!scheduled) return;
 
-        const key = `${now}-${new Date().toDateString()}`;
-        if (sentToday[key]) return;
-        sentToday[key] = true;
+        const todayKey = `${now}-${new Date().toDateString()}`;
+        if (sentToday[todayKey]) return;
+        sentToday[todayKey] = true;
 
+        // GoatBot thread list
         const threads = global.db?.allThreadData || [];
-        for (const t of threads) {
-          if (t.threadID) api.sendMessage(scheduled.message, t.threadID);
+
+        for (const thread of threads) {
+          if (thread.threadID) {
+            api.sendMessage(scheduled.message, thread.threadID);
+          }
         }
 
-      } catch (e) {
-        console.log("[AUTOTIME ERROR]", e.message);
+      } catch (err) {
+        console.log("[AUTOTIME ERROR]", err.message);
       }
     }, 1000);
   }
