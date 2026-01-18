@@ -35,7 +35,7 @@ module.exports = {
             const botPrefix = `${global.GoatBot.config.prefix}`;
             const authorName = "𝐀𝐥𝐈𝐇𝐒𝐀𝐍 𝐒𝐇𝐎𝐔𝐑𝐎𝐕";
             const authorFB = "https://www.facebook.com/shourov.sm24";
-            const authorInsta = "দিমু না";
+            const authorInsta = " 01709281334";
             const status = "𝑺𝑰𝑵𝑮𝑳𝑬..!";
 
             const now = moment().tz('Asia/Dhaka');
@@ -78,7 +78,7 @@ module.exports = {
 ┃ ⚙ 𝑼𝒑𝒕𝒊𝒎𝒆: ${uptimeString}
 ┃
 ┃ 🌐 𝑭𝒂𝒄𝒆𝒃𝒐𝒐𝒌: ${authorFB}
-┃ 📸 𝑰𝒏𝒔𝒕𝒂: ${authorInsta}
+┃ 📸 WhatsAPP: ${authorInsta}
 ┃
 ╰─╼━━━━━━━━━━━━━━━━━━━━━━━━━━━━╾─╯`,
                     attachment: await global.utils.getStreamFromURL(videoUrl)
