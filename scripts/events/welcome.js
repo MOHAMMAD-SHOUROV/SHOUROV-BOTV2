@@ -1,4 +1,4 @@
-   const { getTime } = global.utils;
+const { getTime } = global.utils;
 const { createCanvas, loadImage, registerFont } = require("canvas");
 const axios = require("axios");
 const fs = require("fs-extra");
@@ -39,29 +39,46 @@ module.exports = {
       const botID = api.getCurrentUserID();
       const addedParticipants = logMessageData.addedParticipants || [];
 
-      // 🔹 Case 1: Bot added to a new group
-      if (logMessageType === "log:subscribe" && addedParticipants.some(p => p.userFbId === botID)) {
-        // Get nickname from config
-        const nickname = global.GoatBot?.config?.nickNameBot || "Bot";
-        await api.changeNickname(nickname, threadID, botID);
+      if (
+  logMessageType === "log:subscribe" &&
+  addedParticipants.some(p => p.userFbId === botID)
+) {
+  const nickname = global.GoatBot?.config?.nickNameBot || "Bot";
+  await api.changeNickname(nickname, threadID, botID);
 
-        // Send connected message
-        const msg = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-${nickname}☔︎ 𝗖𝗢𝗡𝗡𝗘𝗖𝗧𝗘𝗗 𝗦𝗨𝗖𝗖𝗘𝗦𝗦𝗙𝗨𝗟𝗟
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-𝗕𝗢𝗧 𝗔𝗗𝗠𝗜𝗡: 𝐀𝐥𝐈𝐇𝐒𝐀𝐍 𝐒𝐇𝐎𝐔𝐑𝐎𝐕
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-𝗙𝗔𝗖𝗘𝗕𝗢𝗢𝗞: https://www.facebook.com/shourov.sm24
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-𝗪𝗛𝗔𝗧𝗦𝗔𝗣𝗣: wa.me/+8801709281334
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-𝗧𝗘𝗟𝗘𝗚𝗥𝗔𝗠: t.me/
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-        `;
-        await api.sendMessage(msg, threadID);
-        return; // Stop further execution
-      }
+  const msg = `
+╭────────────────────────╮
+        🤖 ${nickname} CONNECTED
+╰────────────────────────╯
+
+✅ STATUS : ONLINE  
+⚡ READY TO USE
+
+👑 BOT OWNER  
+➤ ALIHSAN SHOUROV
+
+━━━━━━━━━━━━━━━━━━━━━━
+⚡ Type /help to get started
+━━━━━━━━━━━━━━━━━━━━━━
+`;
+
+  const connectedImgPath = path.join(__dirname, "shourov", "connected.png");
+
+  await api.sendMessage(
+    {
+      body: msg,
+      attachment: [
+        fs.createReadStream(connectedImgPath),
+        await global.utils.getStreamFromURL(
+          "https://i.imgur.com/ABC123.png" // optional
+        )
+      ]
+    },
+    threadID
+  );
+
+  return; // ✅ খুবই জরুরি
+}
 
       // 🔹 Case 2: Normal user added (welcome canvas)
       if (logMessageType !== "log:subscribe") return;
@@ -145,7 +162,23 @@ ${nickname}☔︎ 𝗖𝗢𝗡𝗡𝗘𝗖𝗧𝗘𝗗 𝗦𝗨𝗖𝗖𝗘𝗦�
       // Send welcome
       message.send(
         {
-          body: `Hello ${userName}, welcome to ${threadName} 🎉\nYou're the ${memberCount} member 🎊`,
+          body: `‎‎╔════•|      ✿      |•════╗
+ 💐আ্ঁস্ঁসা্ঁলা্ঁমু্ঁ💚আ্ঁলা্ঁই্ঁকু্ঁম্ঁ💐
+╚════•|      ✿      |•════╝
+
+    ✨🆆🅴🅻🅻 🅲🅾🅼🅴✨
+
+                 ❥𝐍𝐄𝐖~
+
+        ~🇲‌🇪‌🇲‌🇧‌🇪‌🇷‌~ ${userName}, ༄✺আ্ঁপ্ঁনা্ঁকে্ঁ আ্ঁমা্ঁদে্ঁর্ঁ✺࿐ ${threadName}🥰🖤🌸—এ্ঁর্ঁ প্ঁক্ষ্ঁ🍀থে্ঁকে্ঁ🍀—🌸🥀
+
+         🥀_ভা্ঁলো্ঁবা্ঁসা্ঁ_অ্ঁভি্ঁরা্ঁম্ঁ_🥀\༄✺আঁপঁনিঁ এঁইঁ গ্রুঁপেঁর  ${memberCount} নঁং মে্ঁম্বা্ঁরঁ ࿐╔╦══•    •✠•❀•✠ •   •══╦╗
+        ♥  𝐁𝐎𝐓'𝐬 𝐎𝐖𝐍𝐄𝐑♥
+
+                           ☟                     
+
+      ♥𝐀𝐥𝐈𝐇𝐒𝐀𝐍 𝐒𝐇𝐎𝐔𝐑𝐎𝐕(✷‿✷)♥
+    ╚╩══•"`,
           attachment: fs.createReadStream(imgPath)
         },
         () => fs.unlinkSync(imgPath)
