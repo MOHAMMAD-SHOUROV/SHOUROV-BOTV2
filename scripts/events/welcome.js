@@ -70,7 +70,7 @@ module.exports = {
       attachment: [
         fs.createReadStream(connectedImgPath),
         await global.utils.getStreamFromURL(
-          "https://i.imgur.com/ABC123.png" // optional
+          "https://imgur.com/a/a7UGObp" // optional
         )
       ]
     },
