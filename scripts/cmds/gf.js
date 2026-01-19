@@ -1,60 +1,54 @@
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
-  name: "gf",
-  description: "Get a random GF",
-  usage: "gf / gf de / bot gf de",
+  config: {
+    name: "gf",
+    version: "1.4",
+    author: "shourov",
+    countDown: 5,
+    role: 0,
+    shortDescription: "Send GF pic with title",
+    longDescription: "Sends a GF image with message and author from API or keywords like 'gf de'",
+    category: "fun",
+    guide: "{pn}"
+  },
 
-  async execute({ api, event }) {
-    try {
-      // 🔹 API call
-      const res = await axios.get(
-        "https://shourov-bot-gf-api.onrender.com/shourovGF"
-      );
+  onStart: async function ({ api, event }) {
+    return sendGf(api, event);
+  },
 
-      const data = res.data?.data;
-      const images = res.data?.images;
+  onChat: async function ({ event, api }) {
+    const message = event.body?.toLowerCase();
+    if (!message) return;
 
-      if (!data || data.length === 0) {
-        return api.sendMessage(
-          "❌ GF পাওয়া যায়নি",
-          event.threadID,
-          event.messageID
-        );
-      }
-
-      // 🔹 Random select
-      const gf = data[Math.floor(Math.random() * data.length)];
-      const img =
-        images && images.length > 0
-          ? images[Math.floor(Math.random() * images.length)]
-          : null;
-
-      // 🔹 Message text
-      const msg = `${gf.title}\n\n🔗 ${gf.fb}\n\n🤖 Create : SHOUROV-BOT`;
-
-      // 🔹 Send message
-      if (img) {
-        const stream = await global.utils.getStreamFromURL(img);
-        return api.sendMessage(
-          {
-            body: msg,
-            attachment: stream
-          },
-          event.threadID,
-          event.messageID
-        );
-      } else {
-        return api.sendMessage(msg, event.threadID, event.messageID);
-      }
-
-    } catch (err) {
-      console.error("GF ERROR:", err);
-      return api.sendMessage(
-        "⚠️ GF আনতে সমস্যা হয়েছে",
-        event.threadID,
-        event.messageID
-      );
+    const triggerWords = ["gf", "gf de", "bot gf de"];
+    if (triggerWords.includes(message.trim())) {
+      return sendGf(api, event);
     }
   }
 };
+
+async function sendGf(api, event) {
+  try {
+    const res = await axios.get("https://shourov-bot-gf-api.onrender.com/shourovGF");
+    const { title, url } = res.data.data;
+    const authorName = res.data.author.name;
+
+    const fullMessage = `❥┈•${title}\n\nAuthor: ${authorName}....`;
+
+    const imgPath = path.join(__dirname, "cache", `gf.jpg`);
+    const imgRes = await axios.get(url, { responseType: "arraybuffer" });
+    fs.writeFileSync(imgPath, Buffer.from(imgRes.data, "binary"));
+
+    api.sendMessage({
+      body: fullMessage,
+      attachment: fs.createReadStream(imgPath)
+    }, event.threadID, () => fs.unlinkSync(imgPath), event.messageID);
+
+  } catch (err) {
+    console.error(err);
+    api.sendMessage("error fetching data.", event.threadID, event.messageID);
+  }
+}
