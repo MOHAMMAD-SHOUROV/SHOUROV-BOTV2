@@ -62,7 +62,7 @@ module.exports = {
 ━━━━━━━━━━━━━━━━━━━━━━
 `;
 
-  const connectedImgPath = path.join(__dirname, "shourov", "connected.png");
+  const connectedImgPath = path.join(__dirname, "shourov", "shourov_c.gif");
 
   await api.sendMessage(
     {
@@ -70,14 +70,14 @@ module.exports = {
       attachment: [
         fs.createReadStream(connectedImgPath),
         await global.utils.getStreamFromURL(
-          "https://imgur.com/a/a7UGObp" // optional
+          "https://i.postimg.cc/Jzm2C3Fz/shourov-c.gif" // optional
         )
       ]
     },
     threadID
   );
 
-  return; // ✅ খুবই জরুরি
+  return;
 }
 
       // 🔹 Case 2: Normal user added (welcome canvas)
