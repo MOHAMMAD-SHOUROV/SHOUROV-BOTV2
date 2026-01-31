@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "chor",
     version: "2.0.0",
-    author: "SHAHADAT SAHU",
+    author: "Alihsan Shourov",
     role: 0,
     category: "fun",
     shortDescription: {
@@ -66,7 +66,7 @@ module.exports = {
       fs.unlinkSync(imgPath);
 
     } catch (e) {
-      return message.reply("❌ API Error! Call Boss SAHU.");
+      return message.reply("❌ API Error!.");
     }
   }
 };
