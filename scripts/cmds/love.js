@@ -1,57 +1,111 @@
 const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
+const jimp = require("jimp");
 
 module.exports = {
   config: {
     name: "love",
-    version: "1.0",
-    author: "Chitron Bhattacharjee",
-    countDown: 10,
+    version: "7.3.1",
+    author: "CYBER BOT TEAM (GoatBot edit by Shourov)",
     role: 0,
+    category: "img",
     shortDescription: {
-      en: "Create a love ship image of two users"
+      en: "Love pair image with caption"
     },
-    description: {
-      en: "Generates a cute ship image between two user avatars"
-    },
-    category: "𝗙𝗨𝗡 & 𝗚𝗔𝗠𝗘",
     guide: {
-      en: "{p}ship @user1 @user2\nExample: {p}ship @alice @bob"
+      en: "{pn} @mention"
     }
   },
 
-  onStart: async function ({ api, event, message }) {
-    const { mentions, senderID, type, messageReply } = event;
+  onStart: async function ({ event, message }) {
+    const { senderID, mentions } = event;
 
-    // Require exactly two mentions
-    const mentionIDs = Object.keys(mentions);
-    if (mentionIDs.length < 2) {
-      return message.reply("❌ | Please mention two users to ship. Example:\n+ship @user1 @user2");
+    const mentionIDs = Object.keys(mentions || {});
+    if (!mentionIDs[0]) {
+      return message.reply("❌ Please mention 1 person.");
     }
 
-    const uid1 = mentionIDs[0];
-    const uid2 = mentionIDs[1];
+    const one = senderID;
+    const two = mentionIDs[0];
 
-    // Get profile picture URLs
-    const avatar1 = `https://graph.facebook.com/${uid1}/picture?width=512&height=512&access_token=350685531728|62f8ce9f74b12f84c123cc23437a4a32`;
-    const avatar2 = `https://graph.facebook.com/${uid2}/picture?width=512&height=512&access_token=350685531728|62f8ce9f74b12f84c123cc23437a4a32`;
+    const captions = [
+      "💖 তুমি আমার চোখেতে সরলতার উপমা 🩷🐰",
+      "💖 প্রিয়… তোমার মাঝেই সব সুখ খুঁজে পাই 🥺❤️",
+      "বিচ্ছেদের পরেও যোগাযোগ রাখার নামই মায়া 💖",
+      "মানুষ চলে যায়, স্মৃতি থেকে যায় 💔",
+      "ভালোবাসা মানে এমন একজন — যার হাসিতে সকাল শুরু হয় 💖",
+      "চোখের ভাষা বোঝে যে, সে-ই প্রিয় মানুষ 💞",
+      "তুমি একটা মিষ্টি অভ্যাস — ছাড়াও বাঁচা যায় না 💖"
+    ];
+
+    const caption = captions[Math.floor(Math.random() * captions.length)];
 
     try {
-      const res = await axios.get(`https://api.popcat.xyz/v2/ship?user1=${encodeURIComponent(avatar1)}&user2=${encodeURIComponent(avatar2)}`, {
-        responseType: "arraybuffer"
+      const imgPath = await makeImage(one, two);
+
+      await message.reply({
+        body: caption,
+        attachment: fs.createReadStream(imgPath)
       });
 
-      const filePath = path.join(__dirname, "cache", `ship_${uid1}_${uid2}_${Date.now()}.png`);
-      fs.writeFileSync(filePath, res.data);
+      fs.unlinkSync(imgPath);
 
-      message.reply({
-        body: "❤️ Here's your ship image! ❤️",
-        attachment: fs.createReadStream(filePath)
-      }, () => fs.unlinkSync(filePath));
-    } catch (err) {
-      console.error(err);
-      message.reply("❌ | Failed to generate ship image. Try again later.");
+    } catch (e) {
+      return message.reply("❌ Image generate failed!");
     }
   }
 };
+
+/* ================= IMAGE MAKER ================= */
+
+async function makeImage(one, two) {
+  const cacheDir = path.join(__dirname, "cache");
+  if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
+
+  const bgPath = path.join(cacheDir, "love_bg.png");
+
+  if (!fs.existsSync(bgPath)) {
+    const bg = await axios.get("https://i.imgur.com/iaOiAXe.jpeg", {
+      responseType: "arraybuffer"
+    });
+    fs.writeFileSync(bgPath, bg.data);
+  }
+
+  const avatar1 = path.join(cacheDir, `avt_${one}.png`);
+  const avatar2 = path.join(cacheDir, `avt_${two}.png`);
+  const outPath = path.join(cacheDir, `love_${one}_${two}.png`);
+
+  const av1 = await axios.get(
+    `https://graph.facebook.com/${one}/picture?width=512&height=512`,
+    { responseType: "arraybuffer" }
+  );
+  const av2 = await axios.get(
+    `https://graph.facebook.com/${two}/picture?width=512&height=512`,
+    { responseType: "arraybuffer" }
+  );
+
+  fs.writeFileSync(avatar1, av1.data);
+  fs.writeFileSync(avatar2, av2.data);
+
+  const bgImg = await jimp.read(bgPath);
+  const c1 = await circle(avatar1);
+  const c2 = await circle(avatar2);
+
+  bgImg
+    .composite(c1.resize(200, 200), 70, 110)
+    .composite(c2.resize(200, 200), 465, 110);
+
+  await bgImg.writeAsync(outPath);
+
+  fs.unlinkSync(avatar1);
+  fs.unlinkSync(avatar2);
+
+  return outPath;
+}
+
+async function circle(imgPath) {
+  const img = await jimp.read(imgPath);
+  img.circle();
+  return img;
+}
