@@ -13,7 +13,7 @@ module.exports = (
   globalData
 ) => {
   const handlerEvents = require(
-    process.env.NODE_ENV == "development"
+    process.env.NODE_ENV === "development"
       ? "./handlerEvents.dev.js"
       : "./handlerEvents.js"
   )(
@@ -29,32 +29,19 @@ module.exports = (
   );
 
   return async function (event) {
-
-    // 🔧 ===============================
-    // 🔧 FIX: mention / reply issue
-    // 🔧 ===============================
-    if (!event.mentions) event.mentions = {};
-    if (!event.messageReply) event.messageReply = null;
-
-    // 🚫 Anti inbox check
+    // ❌ Anti inbox check
     if (
       global.GoatBot.config.antiInbox === true &&
-      (
-        event.senderID == event.threadID ||
-        event.userID == event.senderID ||
-        event.isGroup === false
-      )
+      (event.senderID === event.threadID || event.isGroup === false)
     ) {
       return;
     }
 
-    // 📩 Create message helper
     const message = createFuncMessage(api, event);
 
-    // 🗄️ Check & create DB data
+    // ✅ Ensure DB
     await handlerCheckDB(usersData, threadsData, event);
 
-    // 🔁 Load handler events
     const handlerChat = await handlerEvents(event, message);
     if (!handlerChat) return;
 
@@ -72,40 +59,38 @@ module.exports = (
       read_receipt
     } = handlerChat;
 
-    // 🌐 Global events
-    onAnyEvent();
+    // 🔹 Always safe call
+    if (typeof onAnyEvent === "function") onAnyEvent();
 
-    // 🔀 Event switch
     switch (event.type) {
-
       case "message":
       case "message_reply":
       case "message_unsend":
-        onFirstChat();
-        onChat();
-        onStart();
-        onReply();
+        if (typeof onFirstChat === "function") onFirstChat();
+        if (typeof onChat === "function") onChat();
+        if (typeof onStart === "function") onStart();
+        if (typeof onReply === "function") onReply();
         break;
 
       case "event":
-        handlerEvent();
-        onEvent();
+        if (typeof handlerEvent === "function") handlerEvent();
+        if (typeof onEvent === "function") onEvent();
         break;
 
       case "message_reaction":
-        onReaction();
+        if (typeof onReaction === "function") onReaction();
         break;
 
       case "typ":
-        typ();
+        if (typeof typ === "function") typ();
         break;
 
       case "presence":
-        presence();
+        if (typeof presence === "function") presence();
         break;
 
       case "read_receipt":
-        read_receipt();
+        if (typeof read_receipt === "function") read_receipt();
         break;
 
       default:
