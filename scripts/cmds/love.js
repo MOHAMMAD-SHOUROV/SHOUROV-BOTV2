@@ -1,41 +1,55 @@
 const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
-const jimp = require("jimp");
+const Jimp = require("jimp");
 
 module.exports = {
   config: {
     name: "love",
-    version: "7.3.1",
-    author: "CYBER BOT TEAM (GoatBot edit by Shourov)",
+    version: "8.0.0",
+    author: "CYBER BOT TEAM (Fixed by Shourov)",
     role: 0,
     category: "img",
     shortDescription: {
-      en: "Love pair image with caption"
+      en: "Love pair image (mention / reply / random)"
     },
     guide: {
-      en: "{pn} @mention | reply"
+      en: "{pn} @mention | reply | random"
     }
   },
 
-  onStart: async function ({ event, message }) {
-    const { senderID, mentions, messageReply } = event;
+  onStart: async function ({ event, message, api }) {
+    const { senderID, mentions, messageReply, body, threadID } = event;
 
     let targetID = null;
 
-    // ✅ mention
+    // ✅ 1️⃣ Mention
     if (mentions && Object.keys(mentions).length > 0) {
       targetID = Object.keys(mentions)[0];
     }
-    // ✅ reply
-    else if (messageReply?.senderID) {
+
+    // ✅ 2️⃣ Reply
+    else if (messageReply && messageReply.senderID) {
       targetID = messageReply.senderID;
     }
 
-    if (!targetID) {
-      return message.reply(
-        "❌ Please mention someone or reply to a message."
+    // ✅ 3️⃣ Name detect (stylish হলেও)
+    else if (body) {
+      const threadInfo = await api.getThreadInfo(threadID);
+      const text = body.toLowerCase();
+
+      const found = threadInfo.userInfo.find(u =>
+        u.name && text.includes(u.name.toLowerCase())
       );
+
+      if (found) targetID = found.id;
+    }
+
+    // ✅ 4️⃣ RANDOM user (fallback)
+    if (!targetID) {
+      const threadInfo = await api.getThreadInfo(threadID);
+      const members = threadInfo.participantIDs.filter(id => id !== senderID);
+      targetID = members[Math.floor(Math.random() * members.length)];
     }
 
     const one = senderID;
@@ -51,8 +65,7 @@ module.exports = {
       "তুমি একটা মিষ্টি অভ্যাস — ছাড়াও বাঁচা যায় না 💖"
     ];
 
-    const caption =
-      captions[Math.floor(Math.random() * captions.length)];
+    const caption = captions[Math.floor(Math.random() * captions.length)];
 
     try {
       const imgPath = await makeImage(one, two);
@@ -63,8 +76,9 @@ module.exports = {
       });
 
       fs.unlinkSync(imgPath);
-    } catch (e) {
-      console.error(e);
+
+    } catch (err) {
+      console.log(err);
       return message.reply("❌ Image generate failed!");
     }
   }
@@ -79,10 +93,9 @@ async function makeImage(one, two) {
   const bgPath = path.join(cacheDir, "love_bg.png");
 
   if (!fs.existsSync(bgPath)) {
-    const bg = await axios.get(
-      "https://i.imgur.com/iaOiAXe.jpeg",
-      { responseType: "arraybuffer" }
-    );
+    const bg = await axios.get("https://i.imgur.com/iaOiAXe.jpeg", {
+      responseType: "arraybuffer"
+    });
     fs.writeFileSync(bgPath, bg.data);
   }
 
@@ -102,7 +115,7 @@ async function makeImage(one, two) {
   fs.writeFileSync(avatar1, av1.data);
   fs.writeFileSync(avatar2, av2.data);
 
-  const bgImg = await jimp.read(bgPath);
+  const bgImg = await Jimp.read(bgPath);
   const c1 = await circle(avatar1);
   const c2 = await circle(avatar2);
 
@@ -119,7 +132,7 @@ async function makeImage(one, two) {
 }
 
 async function circle(imgPath) {
-  const img = await jimp.read(imgPath);
+  const img = await Jimp.read(imgPath);
   img.circle();
   return img;
 }
