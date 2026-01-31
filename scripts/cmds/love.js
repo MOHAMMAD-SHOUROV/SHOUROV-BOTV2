@@ -14,33 +14,32 @@ module.exports = {
       en: "Love pair image with caption"
     },
     guide: {
-      en: "{pn} @mention"
+      en: "{pn} @mention | reply"
     }
   },
 
   onStart: async function ({ event, message }) {
-  const { senderID, mentions, messageReply } = event;
+    const { senderID, mentions, messageReply } = event;
 
-  let targetID = null;
+    let targetID = null;
 
-  // ✅ Mention
-  if (mentions && Object.keys(mentions).length > 0) {
-    targetID = Object.keys(mentions)[0];
-  }
+    // ✅ mention
+    if (mentions && Object.keys(mentions).length > 0) {
+      targetID = Object.keys(mentions)[0];
+    }
+    // ✅ reply
+    else if (messageReply?.senderID) {
+      targetID = messageReply.senderID;
+    }
 
-  // ✅ Reply
-  else if (messageReply && messageReply.senderID) {
-    targetID = messageReply.senderID;
-  }
+    if (!targetID) {
+      return message.reply(
+        "❌ Please mention someone or reply to a message."
+      );
+    }
 
-  if (!targetID) {
-    return message.reply(
-      "❌ Please mention someone or reply to a message."
-    );
-  }
-
-  // use targetID normally
-}
+    const one = senderID;
+    const two = targetID;
 
     const captions = [
       "💖 তুমি আমার চোখেতে সরলতার উপমা 🩷🐰",
@@ -52,7 +51,8 @@ module.exports = {
       "তুমি একটা মিষ্টি অভ্যাস — ছাড়াও বাঁচা যায় না 💖"
     ];
 
-    const caption = captions[Math.floor(Math.random() * captions.length)];
+    const caption =
+      captions[Math.floor(Math.random() * captions.length)];
 
     try {
       const imgPath = await makeImage(one, two);
@@ -63,8 +63,8 @@ module.exports = {
       });
 
       fs.unlinkSync(imgPath);
-
     } catch (e) {
+      console.error(e);
       return message.reply("❌ Image generate failed!");
     }
   }
@@ -79,9 +79,10 @@ async function makeImage(one, two) {
   const bgPath = path.join(cacheDir, "love_bg.png");
 
   if (!fs.existsSync(bgPath)) {
-    const bg = await axios.get("https://i.imgur.com/iaOiAXe.jpeg", {
-      responseType: "arraybuffer"
-    });
+    const bg = await axios.get(
+      "https://i.imgur.com/iaOiAXe.jpeg",
+      { responseType: "arraybuffer" }
+    );
     fs.writeFileSync(bgPath, bg.data);
   }
 
