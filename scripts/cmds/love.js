@@ -19,15 +19,28 @@ module.exports = {
   },
 
   onStart: async function ({ event, message }) {
-    const { senderID, mentions } = event;
+  const { senderID, mentions, messageReply } = event;
 
-    const mentionIDs = Object.keys(mentions || {});
-    if (!mentionIDs[0]) {
-      return message.reply("❌ Please mention 1 person.");
-    }
+  let targetID = null;
 
-    const one = senderID;
-    const two = mentionIDs[0];
+  // ✅ Mention
+  if (mentions && Object.keys(mentions).length > 0) {
+    targetID = Object.keys(mentions)[0];
+  }
+
+  // ✅ Reply
+  else if (messageReply && messageReply.senderID) {
+    targetID = messageReply.senderID;
+  }
+
+  if (!targetID) {
+    return message.reply(
+      "❌ Please mention someone or reply to a message."
+    );
+  }
+
+  // use targetID normally
+}
 
     const captions = [
       "💖 তুমি আমার চোখেতে সরলতার উপমা 🩷🐰",
