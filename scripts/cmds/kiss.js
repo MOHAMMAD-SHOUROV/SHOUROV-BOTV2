@@ -1,97 +1,78 @@
-const Jimp = require("jimp");
-const axios = require("axios");
 const fs = require("fs-extra");
-const path = require("path");
+const { createCanvas, loadImage } = require("canvas");
 
 module.exports = {
   config: {
-    name: "k",
-    aliases: ["ki"],
-    version: "6.3",
-    author: "NIROB",
+    name: "kiss",
+    version: "1.0.11",
+    author: "Rakib Adil",
     countDown: 5,
     role: 0,
-    shortDescription: "KISS",
-    longDescription: "Send kiss pic with merged profile pictures",
+    longDescription: "{p}kiss @mention or reply someone you want to kiss that person 😚",
     category: "funny",
-    guide: "{pn} @mention"
+    guide: "{p}kiss and mention someone you want to kiss 🥴",
+	 usePrefix : true,//you can use this cmd to no prefix, just set the true to false.
+	 premium: false,
+    notes : " If you change the author then the command will not work and not usable"
   },
 
-  onStart: async function ({ api, message, event }) {
+  onStart: async function ({ api, message, event, usersData }) {
+	const owner = module.exports.config;
+	const eAuth = "UmFraWIgQWRpbA==";
+	const dAuth = Buffer.from(eAuth, "base64").toString("utf8");
+		if(owner.author !== dAuth) return message.reply("you've changed the author name, please set it to default(Rakib Adil) otherwise this command will not work.🙂");
+
+    let one = event.senderID, two;
     const mention = Object.keys(event.mentions);
-
-    if (!mention.length) return message.reply("⚠️ Please mention someone!");
-
-    const senderID = event.senderID;
-    const targetID = mention[0];
-
-    // Fetch user info to get names and genders
-    let senderName = "";
-    let targetName = "";
-    let targetGender = "male"; // default male
-    try {
-      const users = await api.getUserInfo([senderID, targetID]);
-      senderName = users[senderID]?.name || "Sender";
-      targetName = users[targetID]?.name || "Target";
-      targetGender = users[targetID]?.gender || "male";
-    } catch (err) {
-      console.log("Error fetching user info:", err);
-      senderName = "Sender";
-      targetName = "Target";
-    }
-
-    // Facebook Graph API profile pics
-    const avatarSender = `https://graph.facebook.com/${senderID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
-    const avatarTarget = `https://graph.facebook.com/${targetID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
-
-    // Catbox kiss background
-    const catboxKissUrl = "https://files.catbox.moe/szs5fk.jpg";
+    if(mention.length > 0){
+        two = mention[0];
+    }else if(event.type === "message_reply"){
+        two = event.messageReply.senderID;
+    }else{
+        message.reply("please mention or reply someone message to kiss him/her 🌚")
+    };
 
     try {
-      // Download images
-      const [bgBuffer, bufSender, bufTarget] = await Promise.all([
-        axios.get(catboxKissUrl, { responseType: "arraybuffer" }).then(res => res.data),
-        axios.get(avatarSender, { responseType: "arraybuffer" }).then(res => res.data),
-        axios.get(avatarTarget, { responseType: "arraybuffer" }).then(res => res.data)
-      ]);
+      const avatarURL1 = await usersData.getAvatarUrl(one);
+      const avatarURL2 = await usersData.getAvatarUrl(two);
 
-      // Read images with Jimp
-      const bg = await Jimp.read(bgBuffer);
-      const imgSender = await Jimp.read(bufSender);
-      const imgTarget = await Jimp.read(bufTarget);
+      const canvas = createCanvas(950, 850);
+      const ctx = canvas.getContext("2d");
 
-      // Resize avatars
-      imgSender.resize(140, 140);
-      imgTarget.resize(160, 160);
+      const background = await loadImage("https://files.catbox.moe/6qg782.jpg");
+      ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
-      // Merge avatars based on gender
-      if (targetGender === "male") {
-        // Male on left (catbox), female on right
-        bg.composite(imgTarget, 50, bg.getHeight() - 450); // male position
-        bg.composite(imgSender, bg.getWidth() - 225, bg.getHeight() - 500); // sender/female
-      } else {
-        // Female on left (catbox), male on right
-        bg.composite(imgSender, 50, bg.getHeight() - 450); // sender/male
-        bg.composite(imgTarget, bg.getWidth() - 225, bg.getHeight() - 500); // female position
-      }
+      const avatar1 = await loadImage(avatarURL1);
+      const avatar2 = await loadImage(avatarURL2);
 
-      // Save temp image
-      const tempPath = path.join(__dirname, `tmp/${senderID}_${targetID}_kiss.png`);
-      await fs.ensureDir(path.dirname(tempPath));
-      await bg.writeAsync(tempPath);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(725, 250, 85, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(avatar1, 640, 170, 170, 170);
+      ctx.restore();
 
-      // Reply with merged image and Facebook names
-      await message.reply({
-        body: `😘 ${senderName} kisses ${targetName}!`,
-        attachment: fs.createReadStream(tempPath)
-      });
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(175, 370, 85, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(avatar2, 90, 280, 170, 170);
+      ctx.restore();
 
-      // Delete temp image
-      fs.unlinkSync(tempPath);
+      const outputPath = `${__dirname}/tmp/kiss_image.png`;
+      const buffer = canvas.toBuffer("image/png");
 
-    } catch (err) {
-      console.log("Error creating kiss image:", err);
-      message.reply("⚠️ Error: Could not create kiss image!");
+      fs.writeFileSync(outputPath, buffer);
+
+      message.reply({
+        body: "Ummmmaaaaahhh! 😽😘",
+        attachment: fs.createReadStream(outputPath)
+      }, () => fs.unlinkSync(outputPath));
+    } catch (error) {
+      console.error(error.message);
+      message.reply("an error occurred, please try again later.🐸")
     }
   }
 };
