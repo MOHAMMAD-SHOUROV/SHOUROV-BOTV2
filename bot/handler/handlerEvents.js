@@ -1,9 +1,6 @@
-const fs = require("fs-extra");
-const nullAndUndefined = [undefined, null];
+'use strict';
 
-function getType(obj) {
-  return Object.prototype.toString.call(obj).slice(8, -1);
-}
+const fs = require("fs-extra");
 
 function getRole(threadData, senderID) {
   const adminBot = global.GoatBot.config.adminBot || [];
@@ -51,66 +48,53 @@ module.exports = function (
 ) {
   return async function (event, message) {
 
-    // 🔐 HARD SAFETY (MENTION + REPLY FIX)
-    if (!event.mentions || typeof event.mentions !== "object") {
-      event.mentions = {};
-    }
-    if (!event.messageReply || typeof event.messageReply !== "object") {
-      event.messageReply = null;
-    }
+    // 🛡️ SAFETY (MOST IMPORTANT)
+    if (!event.mentions) event.mentions = {};
+    if (!event.messageReply) event.messageReply = null;
 
-    const { utils, client, GoatBot } = global;
+    const { utils, GoatBot } = global;
     const { getPrefix, log } = utils;
 
     const { body, threadID, isGroup } = event;
-    if (!threadID) return;
+    if (!threadID || !body) return;
 
-    // ✅ STRONG senderID FIX (group + inbox + reply)
+    // ✅ STRONG senderID FIX (inbox + group)
     const senderID =
       event.senderID ||
       event.userID ||
       event.author ||
-      event.threadID;
+      threadID;
 
-    // ✅ Ensure DB data
     let threadData =
-      global.db.allThreadData.find(t => t.threadID == threadID);
-    if (!threadData) threadData = await threadsData.create(threadID);
+      global.db.allThreadData.find(t => t.threadID == threadID) ||
+      (await threadsData.create(threadID));
 
     let userData =
-      global.db.allUserData.find(u => u.userID == senderID);
-    if (!userData) userData = await usersData.create(senderID);
+      global.db.allUserData.find(u => u.userID == senderID) ||
+      (await usersData.create(senderID));
 
     const prefix = getPrefix(threadID);
     const role = getRole(threadData, senderID);
 
-    /* ================= COMMAND START ================= */
-
+    // ================= COMMAND HANDLER =================
     async function onStart() {
-      if (!body || typeof body !== "string") return;
-
       let args = [];
-      let commandName;
-      let command;
+      let commandName = null;
+      let command = null;
 
-      // ✅ PREFIX COMMAND
+      // ✅ PREFIX COMMAND (mention-safe)
       if (body.startsWith(prefix)) {
-        args = body.slice(prefix.length).trim().split(/\s+/);
-        commandName = args.shift()?.toLowerCase();
+        const withoutPrefix = body.slice(prefix.length).trim();
+        const split = withoutPrefix.split(/\s+/);
+
+        commandName = split.shift()?.toLowerCase();
+        args = split;
       }
-      // ✅ NO PREFIX COMMAND
-      else {
-        const firstWord = body.split(/\s+/)[0].toLowerCase();
-        const cmd = GoatBot.commands.get(firstWord);
-        if (cmd && cmd.config?.prefix === false) {
-          args = body.split(/\s+/);
-          commandName = args.shift().toLowerCase();
-          command = cmd;
-        } else return;
-      }
+
+      // ❌ no prefix → ignore
+      if (!commandName) return;
 
       command =
-        command ||
         GoatBot.commands.get(commandName) ||
         GoatBot.commands.get(GoatBot.aliases.get(commandName));
 
@@ -144,19 +128,18 @@ module.exports = function (
           message,
           event,
           args,
+          commandName,
           usersData,
           threadsData
         });
-
         log.info("CMD", `${commandName} | ${senderID}`);
       } catch (e) {
         log.err("CMD ERROR", e);
-        message.reply("❌ Error occurred while running command.");
+        message.reply("❌ Command error occurred.");
       }
     }
 
-    /* ================= REPLY ================= */
-
+    // ================= REPLY HANDLER =================
     async function onReply() {
       if (!event.messageReply) return;
 
@@ -164,7 +147,7 @@ module.exports = function (
       if (!Reply) return;
 
       const command = GoatBot.commands.get(Reply.commandName);
-      if (!command || typeof command.onReply !== "function") return;
+      if (!command || !command.onReply) return;
 
       try {
         await command.onReply({
@@ -182,13 +165,8 @@ module.exports = function (
       onStart,
       onReply,
       onChat: async () => {},
-      onAnyEvent: async () => {},
       onReaction: async () => {},
-      onEvent: async () => {},
-      handlerEvent: async () => {},
-      presence: async () => {},
-      read_receipt: async () => {},
-      typ: async () => {}
+      onAnyEvent: async () => {}
     };
   };
 };
