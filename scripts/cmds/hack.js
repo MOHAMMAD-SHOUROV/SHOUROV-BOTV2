@@ -42,7 +42,7 @@ async function wrapText(ctx, text, maxWidth) {
 module.exports = {
   config: {
     name: "hack",
-    author: "alihsan shourov",
+    author: "MAHBUB ULLASH",
     countDown: 5,
     role: 0,
     category: "fun",
@@ -56,25 +56,9 @@ module.exports = {
       let pathImg = __dirname + "/tmp/background.png";
       let pathAvt1 = __dirname + "/tmp/Avtmot.png";
 
-      let id;
-
-// 1️⃣ reply check (সবচেয়ে reliable)
-if (event.messageReply) {
-  id = event.messageReply.senderID;
-}
-
-// 2️⃣ mention check
-else if (event.mentions && Object.keys(event.mentions).length > 0) {
-  id = Object.keys(event.mentions)[0];
-}
-
-// 3️⃣ fallback
-else {
-  id = event.senderID;
-}
-
-var nameInfo = await api.getUserInfo(id);
-var name = nameInfo[id].name;
+      var id = Object.keys(event.mentions)[0] || event.senderID;
+      var nameInfo = await api.getUserInfo(id);
+      var name = nameInfo[id].name;
 
       var background = ["https://files.catbox.moe/ibmk54.jpg"];
       var rd = background[Math.floor(Math.random() * background.length)];
@@ -103,11 +87,11 @@ var name = nameInfo[id].name;
 
       ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
 
-      ctx.font = "400 20px Arial";
+      ctx.font = "400 23px Arial";
       ctx.fillStyle = "#1878F3";
 
       const lines = await wrapText(ctx, name, 1160);
-      ctx.fillText(lines.join("\n"), 150, 455);
+      ctx.fillText(lines.join("\n"), 146, 451);
 
       ctx.drawImage(baseAvt1, 55, 410, 70, 70);
 
@@ -118,7 +102,7 @@ var name = nameInfo[id].name;
 
       return api.sendMessage(
         {
-          body: "✅ 𝙎𝙪𝙘𝙘𝙚𝙨𝙨𝙛𝙪𝙡𝙡𝙮 𝙃𝙖𝙘𝙠𝙚𝙙 𝙏𝙝𝙞𝙨 𝙐𝙨𝙚𝙧!\nMy Lord, আইড়ি বাঁচাতে চাইলে Alihsan Shourov বসকে তাড়াতাড়ি ইনবক্স দে!",
+          body: "✅ 𝙎𝙪𝙘𝙘𝙚𝙨𝙨𝙛𝙪𝙡𝙡𝙮 𝙃𝙖𝙘𝙠𝙚𝙙 𝙏𝙝𝙞𝙨 𝙐𝙨𝙚𝙧!\nMy Lord, আইড়ি বাঁচাতে চাইলে ALihsan Shourov বসকে তাড়াতাড়ি ইনবক্স দে!",
           attachment: fs.createReadStream(pathImg),
         },
         event.threadID,
