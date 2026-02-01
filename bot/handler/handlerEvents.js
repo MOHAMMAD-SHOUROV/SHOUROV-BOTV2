@@ -18,13 +18,6 @@ function isVip(senderID) {
   return vipUsers.includes(senderID);
 }
 
-function replaceShortcutInLang(text, prefix, commandName) {
-  return text
-    .replace(/\{(?:p|prefix)\}/g, prefix)
-    .replace(/\{(?:n|name)\}/g, commandName)
-    .replace(/\{pn\}/g, `${prefix}${commandName}`);
-}
-
 function getRoleConfig(utils, command, isGroup, threadData, commandName) {
   let roleConfig = { onStart: 0 };
 
@@ -57,48 +50,60 @@ module.exports = function (
   globalData
 ) {
   return async function (event, message) {
-    // 🔒 SAFETY FIX (MOST IMPORTANT)
-    if (!event.mentions) event.mentions = {};
-    if (!event.messageReply) event.messageReply = null;
+
+    // 🔐 HARD SAFETY (MENTION + REPLY FIX)
+    if (!event.mentions || typeof event.mentions !== "object") {
+      event.mentions = {};
+    }
+    if (!event.messageReply || typeof event.messageReply !== "object") {
+      event.messageReply = null;
+    }
 
     const { utils, client, GoatBot } = global;
-    const { getPrefix, log, getTime } = utils;
+    const { getPrefix, log } = utils;
 
     const { body, threadID, isGroup } = event;
     if (!threadID) return;
 
-    // ✅ STRONG senderID FIX (inbox + group + reply)
+    // ✅ STRONG senderID FIX (group + inbox + reply)
     const senderID =
       event.senderID ||
       event.userID ||
       event.author ||
       event.threadID;
 
+    // ✅ Ensure DB data
     let threadData =
-      global.db.allThreadData.find(t => t.threadID == threadID) ||
-      (await threadsData.create(threadID));
+      global.db.allThreadData.find(t => t.threadID == threadID);
+    if (!threadData) threadData = await threadsData.create(threadID);
 
     let userData =
-      global.db.allUserData.find(u => u.userID == senderID) ||
-      (await usersData.create(senderID));
+      global.db.allUserData.find(u => u.userID == senderID);
+    if (!userData) userData = await usersData.create(senderID);
 
     const prefix = getPrefix(threadID);
     const role = getRole(threadData, senderID);
-    const langCode = threadData.data.lang || GoatBot.config.language || "en";
+
+    /* ================= COMMAND START ================= */
 
     async function onStart() {
-      if (!body) return;
+      if (!body || typeof body !== "string") return;
 
-      let args, commandName, command;
+      let args = [];
+      let commandName;
+      let command;
 
+      // ✅ PREFIX COMMAND
       if (body.startsWith(prefix)) {
-        args = body.slice(prefix.length).trim().split(/ +/);
+        args = body.slice(prefix.length).trim().split(/\s+/);
         commandName = args.shift()?.toLowerCase();
-      } else {
-        const first = body.split(/ +/)[0].toLowerCase();
-        const cmd = GoatBot.commands.get(first);
-        if (cmd?.config.prefix === false) {
-          args = body.split(/ +/);
+      }
+      // ✅ NO PREFIX COMMAND
+      else {
+        const firstWord = body.split(/\s+/)[0].toLowerCase();
+        const cmd = GoatBot.commands.get(firstWord);
+        if (cmd && cmd.config?.prefix === false) {
+          args = body.split(/\s+/);
           commandName = args.shift().toLowerCase();
           command = cmd;
         } else return;
@@ -139,16 +144,18 @@ module.exports = function (
           message,
           event,
           args,
-          commandName,
           usersData,
           threadsData
         });
+
         log.info("CMD", `${commandName} | ${senderID}`);
       } catch (e) {
         log.err("CMD ERROR", e);
-        message.reply("❌ Error occurred.");
+        message.reply("❌ Error occurred while running command.");
       }
     }
+
+    /* ================= REPLY ================= */
 
     async function onReply() {
       if (!event.messageReply) return;
@@ -157,14 +164,18 @@ module.exports = function (
       if (!Reply) return;
 
       const command = GoatBot.commands.get(Reply.commandName);
-      if (!command) return;
+      if (!command || typeof command.onReply !== "function") return;
 
-      await command.onReply({
-        api,
-        message,
-        event,
-        Reply
-      });
+      try {
+        await command.onReply({
+          api,
+          message,
+          event,
+          Reply
+        });
+      } catch (e) {
+        log.err("REPLY ERROR", e);
+      }
     }
 
     return {
